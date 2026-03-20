@@ -1,65 +1,108 @@
-import Image from "next/image";
+"use client";
+import Link from "next/link";
 
-export default function Home() {
+const palette = {
+  bg: "#0707f1",
+  card: "#FFFFFF",
+  text: "#0B2447",
+  accent: "#3373C4",
+  soft: "#73B9EE",
+  deep: "#003396",
+  green: "#1F8A5C",
+};
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main 
+      style={{ 
+        minHeight: "100vh", 
+        background: palette.bg, 
+        padding: "40px", 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center" 
+      }}
+    >
+      {/* CHANGES MADE BELOW:
+          1. maxWidth increased from 740px to 1100px
+          2. padding increased from 28px to 80px for a "spacious" feel
+          3. borderRadius increased to 40px for a softer look
+      */}
+      <div 
+        style={{ 
+          width: "100%", 
+          maxWidth: "1100px", 
+          background: palette.card, 
+          borderRadius: "40px", 
+          boxShadow: "0 20px 50px rgba(0,0,0,0.1)", 
+          padding: "80px", 
+          textAlign: "center" 
+        }}
+      >
+        <p style={{ margin: 0, fontSize: "2rem", color: palette.accent, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
+          Alzheimer's AI Companion
+        </p>
+        
+        <h1 style={{ margin: "24px 0 16px", fontSize: "4.5rem", lineHeight: 1.1, color: palette.deep, fontWeight: 800 }}>
+          Choose your mode
+        </h1>
+        
+        {/* <p style={{ margin: "0 0 48px", fontSize: "2rem", color: palette.text, opacity: 0.8 }}>
+          Please select an interface to begin.
+        </p> */}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px", marginTop: "20px" }}>
+          
+          {/* PATIENT OPTION */}
+          <Link href="/patient" style={{ textDecoration: "none" }}>
+            <button 
+              style={{ 
+                width: "100%", 
+                minHeight: "220px", 
+                borderRadius: "30px", 
+                border: `4px solid ${palette.accent}`, 
+                background: "#F0F7FF", 
+                color: palette.deep, 
+                padding: "30px",
+                cursor: "pointer",
+                transition: "transform 0.2s ease"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <div style={{ fontSize: "3.5rem", fontWeight: 800, marginBottom: "10px" }}>Patient</div>
+              {/* <div style={{ fontSize: "1.5rem", color: palette.text, lineHeight: 1.4, fontWeight: 500 }}>
+                Simple view with voice chat, <br/> reminders, and family photos.
+              </div> */}
+            </button>
+          </Link>
+
+          {/* CAREGIVER OPTION */}
+          <Link href="/caregiver" style={{ textDecoration: "none" }}>
+            <button 
+              style={{ 
+                width: "100%", 
+                minHeight: "220px", 
+                borderRadius: "30px", 
+                border: `4px solid ${palette.green}`, 
+                background: "#F1FAF5", 
+                color: palette.deep, 
+                padding: "30px",
+                cursor: "pointer",
+                transition: "transform 0.2s ease"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <div style={{ fontSize: "3.5rem", fontWeight: 800, marginBottom: "10px" }}>Caregiver</div>
+              {/* <div style={{ fontSize: "1.5rem", color: palette.text, lineHeight: 1.4, fontWeight: 500 }}>
+                Dashboard to manage routine, <br/> check alerts, and update info.
+              </div> */}
+            </button>
+          </Link>
+
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
