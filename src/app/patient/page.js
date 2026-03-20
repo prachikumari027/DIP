@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const palette = {
-  bg: "#0914ed",
+  bg: "#D6E6FF",
   card: "#FFFFFF",
   text: "#0F233F",
   accent: "#3373C4",
@@ -13,31 +14,69 @@ const palette = {
 };
 
 const fakePhotos = [
-  { url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80", caption: "This is your daughter Priya. She loves you." },
-  { url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80", caption: "This is your son Amit. He smiles when he sees you." },
+  {
+    url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80",
+    caption: "This is your daughter Priya. She loves you.",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80",
+    caption: "This is your son Amit. He smiles when he sees you.",
+  },
 ];
+
+//const [started, setStarted] = useState(false);
 
 export default function PatientPage() {
   const [now, setNow] = useState(new Date());
   const [listening, setListening] = useState(false);
   const [aiText, setAiText] = useState("Hello Ramesh. I am here with you.");
-  const [history, setHistory] = useState([{ by: "AI", text: "Hello Ramesh. I am here with you." }]);
-  const [showPhotos, setShowPhotos] = useState(false);
+  const [history, setHistory] = useState([
+    { by: "AI", text: "Hello Ramesh. I am here with you." },
+  ]);
+  //const [showPhotos, setShowPhotos] = useState(false);
+  const [showRoutine, setShowRoutine] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [started, setStarted] = useState(false);
+  const router = useRouter();
+  const [showAI, setShowAI] = useState(false);
 
-  const dateText = useMemo(() => now.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" }), [now]);
-  const timeText = useMemo(() => now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), [now]);
+  const dateText = useMemo(
+    () =>
+      now.toLocaleDateString("en-US", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    [now],
+  );
+  const timeText = useMemo(
+    () => now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    [now],
+  );
 
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 10000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
-    if (!showPhotos) return;
-    const t = setInterval(() => setPhotoIndex((p) => (p + 1) % fakePhotos.length), 8000);
-    return () => clearInterval(t);
-  }, [showPhotos]);
+  if (!showAI) return;
+
+  const timer = setTimeout(() => {
+    setShowAI(false);
+  }, 180000); // 5 seconds
+
+  return () => clearTimeout(timer);
+  }, [showAI]);
+  // useEffect(() => {
+  //   if (!showPhotos) return;
+  //   const t = setInterval(
+  //     () => setPhotoIndex((p) => (p + 1) % fakePhotos.length),
+  //     8000,
+  //   );
+  //   return () => clearInterval(t);
+  // }, [showPhotos]);
 
   // FIXED: Removed ": string" type annotation
   const speak = (text) => {
@@ -50,29 +89,68 @@ export default function PatientPage() {
 
   // FIXED: Removed "as any" type castings
   const startVoice = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
     const recognition = new SpeechRecognition();
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript;
-      const aiReply = text.toLowerCase().includes("help") ? "You are safe. I will alert your caregiver." : "I hear you. I am here to help.";
-      setHistory((prev) => [...prev.slice(-4), { by: "You", text }, { by: "AI", text: aiReply }]);
+      const aiReply = text.toLowerCase().includes("help")
+        ? "You are safe. I will alert your caregiver."
+        : "I hear you. I am here to help.";
+      setHistory((prev) => [
+        ...prev.slice(-4),
+        { by: "You", text },
+        { by: "AI", text: aiReply },
+      ]);
       setAiText(aiReply);
       speak(aiReply);
+
+      setShowAI(true);
     };
     recognition.start();
   };
+  const hour = now.getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <main style={{ minHeight: "100vh", background: palette.bg, padding: "24px", color: palette.text }}>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
-        
+    <main
+      style={{
+        minHeight: "100vh",
+        background: palette.bg,
+        padding: "24px",
+        color: palette.text,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
         {/* SECTION 1: CENTERED GREETING */}
-        <header style={{ textAlign: "center", padding: "40px 20px", color: "white" }}>
-          <h1 style={{ fontSize: "5rem", fontWeight: 900, margin: 0, lineHeight: 1 }}>
-            Good morning, Ramesh
+        <header
+          style={{
+            textAlign: "center",
+            padding: "20px 20px",
+            color: "#1A1A1A",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "5rem",
+              fontWeight: 900,
+              margin: 0,
+              lineHeight: 1,
+            }}
+          >
+            {greeting}, Ramesh
           </h1>
           <p style={{ fontSize: "2.5rem", marginTop: "20px", opacity: 0.9 }}>
             Today is {dateText}
@@ -83,67 +161,272 @@ export default function PatientPage() {
         </header>
 
         {/* SECTION 2: VOICE CHAT */}
-        <section style={{ background: palette.card, borderRadius: "40px", padding: "40px", boxShadow: "0 15px 40px rgba(0,0,0,0.2)", textAlign: "center" }}>
-          <button 
-            onClick={startVoice} 
-            style={{ 
-              width: "100%", 
-              minHeight: "180px", 
-              background: listening ? palette.red : palette.green, 
-              color: "white", 
-              border: "none", 
-              borderRadius: "30px", 
-              fontSize: "4rem", 
-              fontWeight: 900, 
-              cursor: "pointer"
+        <section
+          style={{
+            background: palette.card,
+            borderRadius: "40px",
+            padding: "40px",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+            textAlign: "center",
+          }}
+        >
+          <button
+            onClick={() => {
+              setStarted(true);
+              startVoice();
+            }}
+            style={{
+              width: "100%",
+              minHeight: "180px",
+              background: listening ? "#2563EB" : palette.green,
+              color: "white",
+              border: "none",
+              borderRadius: "30px",
+              fontSize: "4rem",
+              fontWeight: 900,
+              cursor: "pointer",
             }}
           >
-            {listening ? "I am Listening..." : "Talk to Me"}
+            {listening ? "I am Listening..." : "🎤 Talk to Me"}
           </button>
-          
-          <div style={{ marginTop: "30px", background: palette.softBlue, borderRadius: "24px", padding: "30px", border: `3px solid ${palette.accent}` }}>
-            <p style={{ margin: 0, fontSize: "2.5rem", fontWeight: 800, color: palette.accent }}>AI Response</p>
-            <p style={{ margin: "15px 0 0", fontSize: "2.2rem", lineHeight: 1.3 }}>{aiText}</p>
-          </div>
 
-          <div style={{ marginTop: "30px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            <button onClick={() => { setShowPhotos(true); speak("Showing family photos."); }} style={{ minHeight: "100px", borderRadius: "20px", border: `4px solid ${palette.accent}`, background: "white", fontSize: "2rem", fontWeight: 700 }}>Family Photos</button>
-            <button onClick={() => setShowPhotos(false)} style={{ minHeight: "100px", borderRadius: "20px", border: `4px solid ${palette.accent}`, background: "white", fontSize: "2rem", fontWeight: 700 }}>Show Routine</button>
-          </div>
-          
-          <button onClick={() => speak("I have called for help.")} style={{ width: "100%", marginTop: "20px", minHeight: "100px", borderRadius: "20px", border: "none", background: palette.red, color: "white", fontSize: "2.5rem", fontWeight: 900 }}>EMERGENCY HELP</button>
+          {showAI && (
+  <div style={{
+    marginTop: "30px",
+    background: palette.softBlue,
+    borderRadius: "24px",
+    padding: "30px",
+    border: "2px solid #D0E3FF"
+  }}>
+    <p style={{
+      margin: 0,
+      fontSize: "2.5rem",
+      fontWeight: 800,
+      color: palette.accent
+    }}>
+      AI Response
+    </p>
+    <p style={{
+      margin: "15px 0 0",
+      fontSize: "2.2rem",
+      lineHeight: 1.3
+    }}>
+      {aiText}
+    </p>
+  </div>
+)}
+
+          <button
+            onClick={() => speak("I have called for help.")}
+            style={{
+              width: "100%",
+              marginTop: "20px",
+              minHeight: "100px",
+              borderRadius: "20px",
+              border: "none",
+              background: "#D32F2F",
+              color: "white",
+              fontSize: "2.5rem",
+              fontWeight: 900,
+            }}
+          >
+            🚨 I Need Help
+          </button>
         </section>
 
-        {/* SECTION 3: PHOTOS OR ROUTINE */}
-        <section style={{ background: palette.card, borderRadius: "40px", padding: "40px", boxShadow: "0 15px 40px rgba(0,0,0,0.2)" }}>
-          {showPhotos ? (
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>Your Family</h2>
-              <img src={fakePhotos[photoIndex].url} alt="Family" style={{ width: "100%", height: "500px", borderRadius: "24px", objectFit: "cover" }} />
-              <p style={{ marginTop: "20px", fontSize: "2.5rem", fontWeight: 600 }}>{fakePhotos[photoIndex].caption}</p>
-              <button onClick={() => setPhotoIndex((p) => (p + 1) % fakePhotos.length)} style={{ marginTop: "20px", minHeight: "80px", minWidth: "250px", borderRadius: "20px", background: palette.accent, color: "white", fontSize: "2rem", border: "none" }}>Next Photo</button>
-            </div>
-          ) : (
-            <div>
-              <h2 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>Today's Routine</h2>
-              <div style={{ display: "grid", gap: "15px" }}>
-                {[{ time: "08:00", text: "Wake up & stretch", done: true }, { time: "09:00", text: "Take medicine", done: false }, { time: "12:30", text: "Lunch", done: false }].map((item, index) => (
-                  <div key={index} style={{ padding: "25px", borderRadius: "20px", background: item.done ? "#E8F9EE" : "#F4F8FF", fontSize: "2.2rem", border: `3px solid ${item.done ? "#22C55E" : "#B6D7FF"}`, display: "flex", justifyContent: "space-between" }}>
-                    <span><strong>{item.time}</strong> — {item.text}</span>
-                    {item.done && <span style={{ color: "#22C55E" }}>✓ Done</span>}
-                  </div>
-                ))}
+        <div
+          style={{
+            marginTop: "30px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
+          <div
+            onClick={() => router.push("/patient/photos")}
+            style={{
+              minHeight: "500px",
+              borderRadius: "20px",
+              border: "2px solid #D0E3FF",
+              background: "#FFFFFF",
+              padding: "20px",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              alignItems: "center"
+            }}
+          >
+            {/* HEADING */}
+            <h2 style={{
+              fontSize: "2.2rem",
+              fontWeight: "700",
+              marginBottom: "20px",
+              textAlign: "center",
+              color: "#0F233F"
+            }}>
+              Family Photos
+            </h2>
+
+            {/* IMAGE */}
+            <img
+              src="/family.jpg"   // 👈 your image (put in /public folder)
+              alt="Family"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "350px",
+                objectFit: "contain",
+                borderRadius: "16px"
+              }}
+            />
+          </div>
+
+          <div
+            onClick={() => {
+              setShowRoutine(true);
+              //setShowPhotos(false);
+            }}
+            style={{
+              minHeight: "500px",
+              borderRadius: "20px",
+              border: "2px solid #D0E3FF",
+              background: "#F4F8FF",
+              padding: "20px",
+              cursor: "pointer",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "2rem",
+                marginBottom: "20px",
+                color: "#0F233F",
+              }}
+            >
+              Today's Routine
+            </h2>
+
+            <div style={{ display: "grid", gap: "12px" }}>
+              {/* DONE ITEM */}
+              <div
+                style={{
+                  padding: "20px",
+                  borderRadius: "16px",
+                  background: "#E8F9EE",
+                  border: "2px solid #22C55E",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "1.8rem",
+                }}
+              >
+                <span>
+                  <strong>08:00</strong> — Wake up & stretch
+                </span>
+                <span style={{ color: "#22C55E" }}>✓ Done</span>
+              </div>
+
+              {/* PENDING */}
+              <div
+                style={{
+                  padding: "20px",
+                  borderRadius: "16px",
+                  background: "#FFFFFF",
+                  border: "2px solid #B6D7FF",
+                  fontSize: "1.8rem",
+                }}
+              >
+                <strong>09:00</strong> — Take medicine
+              </div>
+
+              <div
+                style={{
+                  padding: "20px",
+                  borderRadius: "16px",
+                  background: "#FFFFFF",
+                  border: "2px solid #B6D7FF",
+                  fontSize: "1.8rem",
+                }}
+              >
+                <strong>12:30</strong> — Lunch
               </div>
             </div>
-          )}
-        </section>
+          </div>
+        </div>
+
+        {/* SECTION 3: PHOTOS OR ROUTINE */}
+        {/* {showPhotos && (
+          <section
+            style={{
+              background: palette.card, borderRadius: "40px", padding: "40px", boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+            }}>
+            <div style={{ textAlign: "center" }}>
+              <h2 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
+                Your Family
+              </h2>
+              <div style={{ textAlign: "center" }}>
+                <h2 style={{
+                  fontSize: "2.8rem",
+                  marginBottom: "30px",
+                  fontWeight: "700"
+                }}>
+                  Your Family
+                </h2>
+
+                <div style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center"
+                }}>
+                  <img
+                    src={fakePhotos[photoIndex].url}
+                    alt="Family"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "500px",
+                      objectFit: "contain",
+                      borderRadius: "20px"
+                    }}
+                  />
+                </div>
+
+                <p style={{
+                  marginTop: "20px",
+                  fontSize: "2rem",
+                  fontWeight: "500"
+                }}>
+                  {fakePhotos[photoIndex].caption}
+                </p>
+              </div>
+              <p>{fakePhotos[photoIndex].caption}</p>
+            </div>
+          </section>
+        )} */}
 
         {/* SECTION 4: HISTORY */}
-        <section style={{ background: palette.card, borderRadius: "40px", padding: "40px", opacity: 0.9 }}>
-          <h2 style={{ fontSize: "2rem", marginBottom: "20px", opacity: 0.7 }}>Recent Conversation</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <section
+          style={{
+            background: palette.card,
+            borderRadius: "40px",
+            padding: "40px",
+            opacity: 0.9,
+          }}
+        >
+          <h2 style={{ fontSize: "2rem", marginBottom: "20px", opacity: 0.7,color: "#0B3D91" }}>
+            Recent Conversation
+          </h2>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
             {history.map((m, i) => (
-              <div key={i} style={{ padding: "20px", borderRadius: "20px", background: m.by === "AI" ? "#EAF4FF" : "#E7FEE9", fontSize: "1.8rem" }}>
+              <div
+                key={i}
+                style={{
+                  padding: "20px",
+                  borderRadius: "20px",
+                  background: m.by === "AI" ? "#EAF4FF" : "#E7FEE9",
+                  fontSize: "1.8rem",
+                }}
+              >
                 <strong>{m.by}:</strong> {m.text}
               </div>
             ))}
@@ -151,9 +434,19 @@ export default function PatientPage() {
         </section>
 
         <footer style={{ textAlign: "center", padding: "20px" }}>
-          <Link href="/" style={{ fontSize: "1.8rem", color: "white", textDecoration: "underline" }}>Back to Settings</Link>
+          <Link
+            href="/"
+            style={{
+              fontSize: "1.8rem",
+              color: "#1A1A1A",
+              textDecoration: "underline",
+            }}
+          >
+            Back to Settings
+          </Link>
         </footer>
       </div>
     </main>
   );
-}``
+}
+``;

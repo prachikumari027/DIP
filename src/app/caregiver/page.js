@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 const palette = {
-  bg: "#0509f5",
+  bg: "#D6E6FF",
   card: "#FFFFFF",
   text: "#0F233F",
   accent: "#3373C4",
@@ -21,7 +21,7 @@ export default function CaregiverPage() {
 
         <div style={{ background: "#F8FCFF", borderRadius: "18px", border: `2px solid ${palette.accent}`, padding: "16px" }}>
           <h2 style={{ margin: 0, fontSize: "2rem", color: palette.text }}>Upcoming Reminders</h2>
-          <ul style={{ marginTop: "12px", fontSize: "1.8rem", lineHeight: 1.6 }}>
+          <ul style={{ marginTop: "12px", fontSize: "1.8rem", lineHeight: 1.6, color: "#1A1A1A"}}>
             <li>9:00 AM - Medicine reminder</li>
             <li>12:30 PM - Lunch reminder</li>
             <li>3:00 PM - Doctor appointment</li>
@@ -31,7 +31,7 @@ export default function CaregiverPage() {
 
         <div style={{ background: "#FFF8F0", borderRadius: "18px", border: `2px solid ${palette.red}`, padding: "16px" }}>
           <h2 style={{ margin: 0, fontSize: "2rem", color: palette.red }}>Recent Alerts</h2>
-          <ul style={{ marginTop: "12px", fontSize: "1.8rem", lineHeight: 1.6 }}>
+          <ul style={{ marginTop: "12px", fontSize: "1.8rem", lineHeight: 1.6 , color: "#1A1A1A"}}>
             <li>Distress event: short response at 10:14</li>
             <li>Missed medicine at 9:05</li>
           </ul>
@@ -39,7 +39,7 @@ export default function CaregiverPage() {
 
         <div style={{ background: palette.card, borderRadius: "18px", border: `2px solid ${palette.green}`, padding: "16px" }}>
           <h2 style={{ margin: 0, fontSize: "2rem", color: palette.green }}>Daily Routine</h2>
-          <div style={{ marginTop: "12px", fontSize: "1.7rem", lineHeight: 1.5 }}>
+          <div style={{ marginTop: "12px", fontSize: "1.7rem", lineHeight: 1.5 , color: "#1A1A1A"}}>
             <div>08:00 - Wake up</div>
             <div>09:00 - Medicine</div>
             <div>12:30 - Lunch</div>

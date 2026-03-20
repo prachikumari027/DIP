@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 const palette = {
-  bg: "#0707f1",
+  bg: "#D6E6FF",
   card: "#FFFFFF",
   text: "#0B2447",
   accent: "#3373C4",
@@ -16,7 +16,7 @@ export default function HomePage() {
     <main 
       style={{ 
         minHeight: "100vh", 
-        background: palette.bg, 
+        background: "linear-gradient(to bottom, #D6E6FF, #F5FAFF)", 
         padding: "40px", 
         display: "flex", 
         justifyContent: "center", 
@@ -32,14 +32,15 @@ export default function HomePage() {
         style={{ 
           width: "100%", 
           maxWidth: "1100px", 
-          background: palette.card, 
+          background: "#FFFFFF",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.08)", 
           borderRadius: "40px", 
-          boxShadow: "0 20px 50px rgba(0,0,0,0.1)", 
+          //boxShadow: "0 20px 50px rgba(0,0,0,0.1)", 
           padding: "80px", 
           textAlign: "center" 
         }}
       >
-        <p style={{ margin: 0, fontSize: "2rem", color: palette.accent, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
+        <p style={{ margin: 0, fontSize: "1.8rem",opacity: 0.8, color: "#4A6FB3", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
           Alzheimer's AI Companion
         </p>
         
@@ -60,14 +61,15 @@ export default function HomePage() {
                 width: "100%", 
                 minHeight: "220px", 
                 borderRadius: "30px", 
-                border: `4px solid ${palette.accent}`, 
-                background: "#F0F7FF", 
-                color: palette.deep, 
+                background: "#F0F7FF",
+                border: "3px solid #4A90E2",
+                color: "#0B3D91",
                 padding: "30px",
                 cursor: "pointer",
-                transition: "transform 0.2s ease"
+                transition: "transform 0.2s ease",
+                boxShadow: "0 6px 15px rgba(0,0,0,0.08)"
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
               onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
             >
               <div style={{ fontSize: "3.5rem", fontWeight: 800, marginBottom: "10px" }}>Patient</div>
@@ -84,14 +86,15 @@ export default function HomePage() {
                 width: "100%", 
                 minHeight: "220px", 
                 borderRadius: "30px", 
-                border: `4px solid ${palette.green}`, 
-                background: "#F1FAF5", 
-                color: palette.deep, 
+                background: "#EAF7EF",
+                border: "3px solid #2E7D32",
+                color: "#1B5E20", 
                 padding: "30px",
                 cursor: "pointer",
-                transition: "transform 0.2s ease"
+                transition: "transform 0.2s ease",
+                boxShadow: "0 6px 15px rgba(0,0,0,0.08)"
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
               onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
             >
               <div style={{ fontSize: "3.5rem", fontWeight: 800, marginBottom: "10px" }}>Caregiver</div>
