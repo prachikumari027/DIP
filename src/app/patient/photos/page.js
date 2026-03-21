@@ -13,8 +13,14 @@ const fakePhotos = [
     caption: "This is your family.",
   },
   {
-    url: "/family2.jpg",
-    caption: "This is your daughter.",
+    url: "/daughter.jpg",
+    caption: (
+      <>
+        This is your daughter.
+        <br />
+        She loves you very much.
+      </>
+    ),
   },
 ];
 
@@ -22,49 +28,82 @@ export default function PhotosPage() {
   const [photoIndex, setPhotoIndex] = useState(0);
 
   return (
-    <main style={{ background: palette.bg, padding: "24px", minHeight: "100vh" }}>
-      
-      <section style={{ 
-        background: palette.card, 
-        padding: "40px", 
-        borderRadius: "40px",
-        textAlign: "center"
-      }}>
-        
-        <h2 style={{ fontSize: "3rem", marginBottom: "30px" }}>
+    <main
+      style={{ background: palette.bg, padding: "24px", minHeight: "100vh" }}
+    >
+      <section
+        style={{
+          background: palette.card,
+          padding: "40px",
+          borderRadius: "40px",
+          textAlign: "center",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "3rem",
+            marginBottom: "30px",
+            color: "#1A1A1A",
+            fontSize: "3.5rem",
+            fontWeight: "700",
+            textAlign: "center",
+          }}
+        >
           Your Family
         </h2>
 
-        <img 
-          src={fakePhotos[photoIndex].url} 
-          alt="Family"
-          style={{ 
-            maxWidth: "100%", 
-            maxHeight: "500px",
-            objectFit: "contain",
-            borderRadius: "20px"
-          }} 
-        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <img
+            src={fakePhotos[photoIndex].url}
+            alt="Family"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "500px",
+              objectFit: "contain",
+              borderRadius: "20px",
+            }}
+          />
+        </div>
 
-        <p style={{ marginTop: "20px", fontSize: "2rem" }}>
+        <p
+          style={{
+            fontSize: "3rem",
+            marginBottom: "20px",
+            color: "#1A1A1A",
+            fontSize: "3.5rem",
+            fontWeight: "500",
+            textAlign: "center",
+            whiteSpace: "pre-line",
+            lineSpacing: "1px",
+          }}
+        >
           {fakePhotos[photoIndex].caption}
         </p>
 
-        <button 
+        <button
           onClick={() => setPhotoIndex((p) => (p + 1) % fakePhotos.length)}
           style={{
-            marginTop: "20px",
-            padding: "15px 30px",
-            fontSize: "1.8rem",
-            borderRadius: "12px",
+            marginTop: "10px",
+            padding: "25px 25px",
+            fontSize: "2.5rem",
+            fontWeight: "700",
+            borderRadius: "15px",
             background: palette.accent,
-            color: "#0B3D91",
-            border: "none"
+            color: "white",
+            border: "none",
+            width: "30%",
+            minHeight: "100px",
+            letterSpacing: "2px",
           }}
         >
           Next
         </button>
-
       </section>
     </main>
   );

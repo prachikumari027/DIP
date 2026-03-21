@@ -61,13 +61,13 @@ export default function PatientPage() {
   }, []);
 
   useEffect(() => {
-  if (!showAI) return;
+    if (!showAI) return;
 
-  const timer = setTimeout(() => {
-    setShowAI(false);
-  }, 180000); // 5 seconds
+    const timer = setTimeout(() => {
+      setShowAI(false);
+    }, 180000); // 5 seconds
 
-  return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [showAI]);
   // useEffect(() => {
   //   if (!showPhotos) return;
@@ -131,7 +131,7 @@ export default function PatientPage() {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: "12px",
+          gap: "17px",
         }}
       >
         {/* SECTION 1: CENTERED GREETING */}
@@ -185,36 +185,64 @@ export default function PatientPage() {
               fontSize: "4rem",
               fontWeight: 900,
               cursor: "pointer",
+
+              // 👇 IMPORTANT for alignment
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "20px",
             }}
           >
-            {listening ? "I am Listening..." : "🎤 Talk to Me"}
+            {listening ? (
+              "I am Listening..."
+            ) : (
+              <>
+                <img
+                  src="/mic.png" // 👈 put mic.png in public folder
+                  alt="mic"
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    objectFit: "contain",
+                  }}
+                />
+                <span>Talk to Me</span>
+              </>
+            )}
           </button>
 
           {showAI && (
-  <div style={{
-    marginTop: "30px",
-    background: palette.softBlue,
-    borderRadius: "24px",
-    padding: "30px",
-    border: "2px solid #D0E3FF"
-  }}>
-    <p style={{
-      margin: 0,
-      fontSize: "2.5rem",
-      fontWeight: 800,
-      color: palette.accent
-    }}>
-      AI Response
-    </p>
-    <p style={{
-      margin: "15px 0 0",
-      fontSize: "2.2rem",
-      lineHeight: 1.3
-    }}>
-      {aiText}
-    </p>
-  </div>
-)}
+            <div
+              style={{
+                marginTop: "30px",
+                background: palette.softBlue,
+                borderRadius: "24px",
+                padding: "30px",
+                border: "2px solid #D0E3FF",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "3rem",
+                  fontWeight: 800,
+                  color: palette.accent,
+                }}
+              >
+                AI Response
+              </p>
+              <p
+                style={{
+                  margin: "15px 0 0",
+                  fontSize: "3.5rem", // 👈 bigger text
+                  lineHeight: 1.4, // 👈 more spacing between lines
+                  fontWeight: "600", // 👈 slightly bold
+                }}
+              >
+                {aiText}
+              </p>
+            </div>
+          )}
 
           <button
             onClick={() => speak("I have called for help.")}
@@ -228,9 +256,25 @@ export default function PatientPage() {
               color: "white",
               fontSize: "2.5rem",
               fontWeight: 900,
+              cursor: "pointer",
+
+              // 👇 alignment
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "16px",
             }}
           >
-            🚨 I Need Help
+            <img
+              src="/emergency.png" // 👈 add this image in public folder
+              alt="emergency"
+              style={{
+                width: "40px",
+                height: "40px",
+                objectFit: "contain",
+              }}
+            />
+            <span>I Need Help</span>
           </button>
         </section>
 
@@ -238,7 +282,7 @@ export default function PatientPage() {
           style={{
             marginTop: "30px",
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            flexDirection: "column",
             gap: "20px",
           }}
         >
@@ -254,29 +298,31 @@ export default function PatientPage() {
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
             {/* HEADING */}
-            <h2 style={{
-              fontSize: "2.2rem",
-              fontWeight: "700",
-              marginBottom: "20px",
-              textAlign: "center",
-              color: "#0F233F"
-            }}>
+            <h2
+              style={{
+                fontSize: "3.5rem",
+                fontWeight: "700",
+                marginBottom: "20px",
+                textAlign: "center",
+                color: "#0F233F",
+              }}
+            >
               Family Photos
             </h2>
 
             {/* IMAGE */}
             <img
-              src="/family.jpg"   // 👈 your image (put in /public folder)
+              src="/family.jpg" // 👈 your image (put in /public folder)
               alt="Family"
               style={{
                 maxWidth: "100%",
                 maxHeight: "350px",
                 objectFit: "contain",
-                borderRadius: "16px"
+                borderRadius: "16px",
               }}
             />
           </div>
@@ -297,8 +343,10 @@ export default function PatientPage() {
           >
             <h2
               style={{
-                fontSize: "2rem",
+                fontSize: "3.5rem",
+                fontWeight: "700",
                 marginBottom: "20px",
+                textAlign: "center",
                 color: "#0F233F",
               }}
             >
@@ -315,7 +363,7 @@ export default function PatientPage() {
                   border: "2px solid #22C55E",
                   display: "flex",
                   justifyContent: "space-between",
-                  fontSize: "1.8rem",
+                  fontSize: "2rem",
                 }}
               >
                 <span>
@@ -331,7 +379,7 @@ export default function PatientPage() {
                   borderRadius: "16px",
                   background: "#FFFFFF",
                   border: "2px solid #B6D7FF",
-                  fontSize: "1.8rem",
+                  fontSize: "2rem",
                 }}
               >
                 <strong>09:00</strong> — Take medicine
@@ -343,7 +391,7 @@ export default function PatientPage() {
                   borderRadius: "16px",
                   background: "#FFFFFF",
                   border: "2px solid #B6D7FF",
-                  fontSize: "1.8rem",
+                  fontSize: "2rem",
                 }}
               >
                 <strong>12:30</strong> — Lunch
@@ -411,7 +459,15 @@ export default function PatientPage() {
             opacity: 0.9,
           }}
         >
-          <h2 style={{ fontSize: "2rem", marginBottom: "20px", opacity: 0.7,color: "#0B3D91" }}>
+          <h2
+            style={{
+              fontSize: "3.5rem",
+              fontWeight: "700",
+              marginBottom: "20px",
+              //textAlign: "center",
+              color: "#0F233F",
+            }}
+          >
             Recent Conversation
           </h2>
           <div
