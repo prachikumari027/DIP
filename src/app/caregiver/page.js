@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const palette = {
   bg: "#D6E6FF",
@@ -11,10 +12,10 @@ const palette = {
 };
 
 export default function CaregiverPage() {
+  const router = useRouter();
   return (
     <main style={{ minHeight: "100vh", background: palette.bg }}>
       {/* ================= NAVBAR ================= */}
-      
 
       <div
         style={{
@@ -95,7 +96,7 @@ export default function CaregiverPage() {
                 </h2>
               </div>
 
-              {/* NAME BLOCK (HIGHLIGHTED) */}
+              {/* NAME BLOCK */}
               <div
                 style={{
                   background: "#EEF5FF",
@@ -157,13 +158,18 @@ export default function CaregiverPage() {
                   <span style={{ opacity: 0.6 }}>Last Interaction</span>
                   <strong>2 mins ago</strong>
                 </div>
+
+                {/* ✅ PATIENT HISTORY (CLICKABLE) */}
                 <div
+                  onClick={() => router.push("/caregiver/history")}
                   style={{
                     background: "#F8FAFF",
                     borderRadius: "16px",
                     padding: "16px",
                     border: "1px solid #E0ECFF",
                     marginTop: "5px",
+                    cursor: "pointer",
+                    transition: "0.2s",
                   }}
                 >
                   <div
@@ -171,13 +177,20 @@ export default function CaregiverPage() {
                       fontSize: "1.5rem",
                       fontWeight: "600",
                       marginBottom: "6px",
-                      marginTop: "5px",
+                      color: "#1A1A1A",
                     }}
                   >
-                    🧠 AI Summary
+                    📄 Patient History
                   </div>
-                  <div style={{ fontSize: "1.3rem", opacity: 0.7 }}>
-                    Patient is stable. No critical alerts detected.
+
+                  <div
+                    style={{
+                      fontSize: "1.3rem",
+                      opacity: 0.7,
+                      color: "#1A1A1A",
+                    }}
+                  >
+                    View complete medical & activity details →
                   </div>
                 </div>
               </div>

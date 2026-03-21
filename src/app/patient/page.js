@@ -266,7 +266,7 @@ export default function PatientPage() {
             }}
           >
             <img
-              src="/emergency.png" // 👈 add this image in public folder
+              src="/emergency.png" 
               alt="emergency"
               style={{
                 width: "40px",
@@ -280,7 +280,7 @@ export default function PatientPage() {
 
         <div
           style={{
-            marginTop: "30px",
+            marginTop: "20px",
             display: "grid",
             flexDirection: "column",
             gap: "20px",
