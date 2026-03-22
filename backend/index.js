@@ -14,6 +14,7 @@ import authRoutes from "./routes/auth.js";
 import patientRoutes from "./routes/patient.js";
 import caregiverRoutes from "./routes/caregiver.js";
 import uploadRoutes from "./routes/upload.js";
+import aiRoutes from "./routes/ai.js";
 const PORT = process.env.PORT || 5000;
 
 
@@ -45,6 +46,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/patient", patientRoutes);
 app.use("/api/caregiver", caregiverRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/ai", aiRoutes);
+
 
 // Health check
 app.get("/", (req, res) => {
