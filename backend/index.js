@@ -15,6 +15,8 @@ import patientRoutes from "./routes/patient.js";
 import caregiverRoutes from "./routes/caregiver.js";
 import uploadRoutes from "./routes/upload.js";
 import aiRoutes from "./routes/ai.js";
+import connectCloudinary from "./config/cloudinary.js";
+
 const PORT = process.env.PORT || 5000;
 
 
@@ -30,6 +32,8 @@ const io = new Server(server, {
 
 
 connectDB();
+connectCloudinary();
+
 
 
 app.use(helmet());
