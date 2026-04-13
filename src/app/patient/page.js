@@ -1,7 +1,9 @@
+
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { io } from "socket.io-client";
 
 const palette = {
   bg: "#D6E6FF",
@@ -13,72 +15,119 @@ const palette = {
   softBlue: "#F4FAFF",
 };
 
-const fakePhotos = [
-  {
-    url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80",
-    caption: "This is your daughter Priya. She loves you.",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80",
-    caption: "This is your son Amit. He smiles when he sees you.",
-  },
-];
-
-//const [started, setStarted] = useState(false);
-
 export default function PatientPage() {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(null);
   const [listening, setListening] = useState(false);
-  const [aiText, setAiText] = useState("Hello Ramesh. I am here with you.");
-  const [history, setHistory] = useState([
-    { by: "AI", text: "Hello Ramesh. I am here with you." },
-  ]);
-  //const [showPhotos, setShowPhotos] = useState(false);
-  const [showRoutine, setShowRoutine] = useState(false);
-  const [photoIndex, setPhotoIndex] = useState(0);
-  const [started, setStarted] = useState(false);
-  const router = useRouter();
+  const [aiText, setAiText] = useState("");
   const [showAI, setShowAI] = useState(false);
+  const [sessionMessages, setSessionMessages] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [patient, setPatient] = useState(null);
+  const [routine, setRoutine] = useState([]);
+  const [loadingPatient, setLoadingPatient] = useState(true);
+  const [caregiverMessage, setCaregiverMessage] = useState(null);
 
-  const dateText = useMemo(
-    () =>
-      now.toLocaleDateString("en-US", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
-    [now],
-  );
-  const timeText = useMemo(
-    () => now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    [now],
-  );
+  const router = useRouter();
+  const socketRef = useRef(null);
 
+  // ─── Clock (client-only to avoid hydration mismatch) ─────────────────────
   useEffect(() => {
+    setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
+  // ─── Fetch Patient Profile + Routine ─────────────────────────────────────
+  useEffect(() => {
+    const patientId = localStorage.getItem("patientId");
+    if (!patientId) {
+      router.push("/login");
+      return;
+    }
+
+    const API = process.env.NEXT_PUBLIC_API_URL;
+
+    async function loadData() {
+      try {
+        const [profileRes, routineRes] = await Promise.all([
+          fetch(`${API}/api/patient/profile/${patientId}`),
+          fetch(`${API}/api/patient/${patientId}/routine`),
+        ]);
+
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setPatient(profileData.patient);
+        }
+
+        if (routineRes.ok) {
+          const routineData = await routineRes.json();
+          setRoutine(routineData.dailyRoutine || []);
+        }
+      } catch (err) {
+        console.error("Failed to load patient data:", err);
+      } finally {
+        setLoadingPatient(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  // ─── Socket.io Setup ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const patientId = localStorage.getItem("patientId");
+    if (!patientId) return;
+
+    const socket = io(process.env.NEXT_PUBLIC_API_URL);
+    socketRef.current = socket;
+
+    socket.emit("join_patient_room", patientId);
+
+    socket.on("reminder", (data) => {
+      speak(data.message);
+      alert(`⏰ Reminder: ${data.message}`);
+    });
+
+    socket.on("caregiver_message", (data) => {
+      setCaregiverMessage(data);
+      speak(data.message);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // ─── Hide AI panel after 3 mins ──────────────────────────────────────────
   useEffect(() => {
     if (!showAI) return;
-
-    const timer = setTimeout(() => {
-      setShowAI(false);
-    }, 180000); // 5 seconds
-
+    const timer = setTimeout(() => setShowAI(false), 180000);
     return () => clearTimeout(timer);
   }, [showAI]);
-  // useEffect(() => {
-  //   if (!showPhotos) return;
-  //   const t = setInterval(
-  //     () => setPhotoIndex((p) => (p + 1) % fakePhotos.length),
-  //     8000,
-  //   );
-  //   return () => clearInterval(t);
-  // }, [showPhotos]);
 
-  // FIXED: Removed ": string" type annotation
+  // ─── End session on page unload ───────────────────────────────────────────
+  useEffect(() => {
+    const handleUnload = () => {
+      const patientId = localStorage.getItem("patientId");
+      if (!patientId || sessionMessages.length === 0) return;
+      // navigator.sendBeacon(
+      //   `${process.env.NEXT_PUBLIC_API_URL}/api/ai/end-session`,
+      //   JSON.stringify({ patientId, sessionMessages })
+      // );
+      const blob = new Blob(
+        [JSON.stringify({ patientId, sessionMessages })],
+        { type: "application/json" }
+      );
+      navigator.sendBeacon(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/ai/end-session`,
+        blob
+      );
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [sessionMessages]);
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
   const speak = (text) => {
     if (typeof window === "undefined") return;
     window.speechSynthesis.cancel();
@@ -87,35 +136,125 @@ export default function PatientPage() {
     window.speechSynthesis.speak(u);
   };
 
-  // FIXED: Removed "as any" type castings
   const startVoice = () => {
+    if (typeof window === "undefined") return;
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support voice recognition.");
+      return;
+    }
+
     const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      const aiReply = text.toLowerCase().includes("help")
-        ? "You are safe. I will alert your caregiver."
-        : "I hear you. I am here to help.";
-      setHistory((prev) => [
-        ...prev.slice(-4),
-        { by: "You", text },
-        { by: "AI", text: aiReply },
-      ]);
-      setAiText(aiReply);
-      speak(aiReply);
-
-      setShowAI(true);
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      setListening(false);
     };
+
+    recognition.onresult = async (event) => {
+      const text = event.results[0][0].transcript;
+      const patientId = localStorage.getItem("patientId");
+
+      const newUserMsg = { role: "patient", content: text };
+      const updatedMessages = [...sessionMessages, newUserMsg];
+
+      setHistory((prev) => [...prev.slice(-4), { by: "You", text }]);
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/ai/chat`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              patientId,
+              message: text,
+              sessionMessages: updatedMessages,
+            }),
+          }
+        );
+
+        const data = await response.json();
+        const aiReply = data.reply || "I am having trouble connecting.";
+
+        setSessionMessages(data.updatedMessages || updatedMessages);
+        setHistory((prev) => [
+          ...prev.slice(-4),
+          { by: "AI", text: aiReply },
+        ]);
+        setAiText(aiReply);
+        speak(aiReply);
+        setShowAI(true);
+      } catch (error) {
+        console.error("AI Chat Error:", error);
+      }
+    };
+
     recognition.start();
   };
-  const hour = now.getHours();
+
+  const markRoutineDone = async (routineItem) => {
+    const patientId = localStorage.getItem("patientId");
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/patient/${patientId}/routine/${routineItem._id}`,
+        { method: "PATCH" }
+      );
+      setRoutine((prev) =>
+        prev.map((r) =>
+          r._id === routineItem._id ? { ...r, completed: true } : r
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark routine done:", err);
+    }
+  };
+
+  const handleHelp = async () => {
+    speak("I have called for help.");
+    const patientId = localStorage.getItem("patientId");
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientId,
+          message: "I need help",
+          sessionMessages,
+        }),
+      });
+    } catch (err) {
+      console.error("Help alert error:", err);
+    }
+  };
+
+  // ─── Derived values (safe: now can be null on server) ────────────────────
+  const dateText = now
+    ? now.toLocaleDateString("en-US", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+    : "";
+
+  const timeText = now
+    ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  const hour = now ? now.getHours() : 12;
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
+  const patientName = patient?.name || "";
+
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <main
       style={{
@@ -134,23 +273,10 @@ export default function PatientPage() {
           gap: "17px",
         }}
       >
-        {/* SECTION 1: CENTERED GREETING */}
-        <header
-          style={{
-            textAlign: "center",
-            padding: "20px 20px",
-            color: "#1A1A1A",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "5rem",
-              fontWeight: 900,
-              margin: 0,
-              lineHeight: 1,
-            }}
-          >
-            {greeting}, Ramesh
+        {/* ── GREETING ── */}
+        <header style={{ textAlign: "center", padding: "20px", color: "#1A1A1A" }}>
+          <h1 style={{ fontSize: "5rem", fontWeight: 900, margin: 0, lineHeight: 1 }}>
+            {greeting}{patientName ? `, ${patientName}` : ""}
           </h1>
           <p style={{ fontSize: "2.5rem", marginTop: "20px", opacity: 0.9 }}>
             Today is {dateText}
@@ -160,7 +286,38 @@ export default function PatientPage() {
           </p>
         </header>
 
-        {/* SECTION 2: VOICE CHAT */}
+        {/* ── CAREGIVER MESSAGE BANNER ── */}
+        {caregiverMessage && (
+          <div
+            style={{
+              background: "#EAF4FF",
+              borderRadius: "20px",
+              padding: "20px 30px",
+              border: "2px solid #B6D7FF",
+              fontSize: "2rem",
+              textAlign: "center",
+            }}
+          >
+            <strong>Message from Caregiver:</strong> {caregiverMessage.message}
+            <button
+              onClick={() => setCaregiverMessage(null)}
+              style={{
+                marginLeft: "20px",
+                padding: "6px 16px",
+                borderRadius: "10px",
+                border: "none",
+                background: palette.accent,
+                color: "white",
+                fontSize: "1.4rem",
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* ── VOICE CHAT ── */}
         <section
           style={{
             background: palette.card,
@@ -171,10 +328,7 @@ export default function PatientPage() {
           }}
         >
           <button
-            onClick={() => {
-              setStarted(true);
-              startVoice();
-            }}
+            onClick={startVoice}
             style={{
               width: "100%",
               minHeight: "180px",
@@ -185,8 +339,6 @@ export default function PatientPage() {
               fontSize: "4rem",
               fontWeight: 900,
               cursor: "pointer",
-
-              // 👇 IMPORTANT for alignment
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -198,13 +350,9 @@ export default function PatientPage() {
             ) : (
               <>
                 <img
-                  src="/mic.png" // 👈 put mic.png in public folder
+                  src="/mic.png"
                   alt="mic"
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    objectFit: "contain",
-                  }}
+                  style={{ width: "60px", height: "60px", objectFit: "contain" }}
                 />
                 <span>Talk to Me</span>
               </>
@@ -221,31 +369,17 @@ export default function PatientPage() {
                 border: "2px solid #D0E3FF",
               }}
             >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "3rem",
-                  fontWeight: 800,
-                  color: palette.accent,
-                }}
-              >
+              <p style={{ margin: 0, fontSize: "3rem", fontWeight: 800, color: palette.accent }}>
                 AI Response
               </p>
-              <p
-                style={{
-                  margin: "15px 0 0",
-                  fontSize: "3.5rem", // 👈 bigger text
-                  lineHeight: 1.4, // 👈 more spacing between lines
-                  fontWeight: "600", // 👈 slightly bold
-                }}
-              >
+              <p style={{ margin: "15px 0 0", fontSize: "3.5rem", lineHeight: 1.4, fontWeight: "600" }}>
                 {aiText}
               </p>
             </div>
           )}
 
           <button
-            onClick={() => speak("I have called for help.")}
+            onClick={handleHelp}
             style={{
               width: "100%",
               marginTop: "20px",
@@ -257,8 +391,6 @@ export default function PatientPage() {
               fontSize: "2.5rem",
               fontWeight: 900,
               cursor: "pointer",
-
-              // 👇 alignment
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -266,26 +398,17 @@ export default function PatientPage() {
             }}
           >
             <img
-              src="/emergency.png" 
+              src="/emergency.png"
               alt="emergency"
-              style={{
-                width: "40px",
-                height: "40px",
-                objectFit: "contain",
-              }}
+              style={{ width: "40px", height: "40px", objectFit: "contain" }}
             />
             <span>I Need Help</span>
           </button>
         </section>
 
-        <div
-          style={{
-            marginTop: "20px",
-            display: "grid",
-            flexDirection: "column",
-            gap: "20px",
-          }}
-        >
+        {/* ── FAMILY PHOTOS + ROUTINE ── */}
+        <div style={{ marginTop: "20px", display: "grid", gap: "20px" }}>
+          {/* Family Photos */}
           <div
             onClick={() => router.push("/patient/photos")}
             style={{
@@ -301,156 +424,65 @@ export default function PatientPage() {
               alignItems: "center",
             }}
           >
-            {/* HEADING */}
-            <h2
-              style={{
-                fontSize: "3.5rem",
-                fontWeight: "700",
-                marginBottom: "20px",
-                textAlign: "center",
-                color: "#0F233F",
-              }}
-            >
+            <h2 style={{ fontSize: "3.5rem", fontWeight: "700", marginBottom: "20px", textAlign: "center", color: "#0F233F" }}>
               Family Photos
             </h2>
-
-            {/* IMAGE */}
             <img
-              src="/family.jpg" // 👈 your image (put in /public folder)
+              src="/family.jpg"
               alt="Family"
-              style={{
-                maxWidth: "100%",
-                maxHeight: "350px",
-                objectFit: "contain",
-                borderRadius: "16px",
-              }}
+              style={{ maxWidth: "100%", maxHeight: "350px", objectFit: "contain", borderRadius: "16px" }}
             />
           </div>
 
+          {/* Today's Routine */}
           <div
-            onClick={() => {
-              setShowRoutine(true);
-              //setShowPhotos(false);
-            }}
             style={{
               minHeight: "500px",
               borderRadius: "20px",
               border: "2px solid #D0E3FF",
               background: "#F4F8FF",
               padding: "20px",
-              cursor: "pointer",
             }}
           >
-            <h2
-              style={{
-                fontSize: "3.5rem",
-                fontWeight: "700",
-                marginBottom: "20px",
-                textAlign: "center",
-                color: "#0F233F",
-              }}
-            >
+            <h2 style={{ fontSize: "3.5rem", fontWeight: "700", marginBottom: "20px", textAlign: "center", color: "#0F233F" }}>
               Today's Routine
             </h2>
 
-            <div style={{ display: "grid", gap: "12px" }}>
-              {/* DONE ITEM */}
-              <div
-                style={{
-                  padding: "20px",
-                  borderRadius: "16px",
-                  background: "#E8F9EE",
-                  border: "2px solid #22C55E",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "2rem",
-                }}
-              >
-                <span>
-                  <strong>08:00</strong> — Wake up & stretch
-                </span>
-                <span style={{ color: "#22C55E" }}>✓ Done</span>
+            {loadingPatient ? (
+              <p style={{ fontSize: "2rem", textAlign: "center", opacity: 0.6 }}>Loading routine...</p>
+            ) : routine.length === 0 ? (
+              <p style={{ fontSize: "2rem", textAlign: "center", opacity: 0.6 }}>No routine set.</p>
+            ) : (
+              <div style={{ display: "grid", gap: "12px" }}>
+                {routine.map((item) => (
+                  <div
+                    key={item._id}
+                    onClick={() => !item.completed && markRoutineDone(item)}
+                    style={{
+                      padding: "20px",
+                      borderRadius: "16px",
+                      background: item.completed ? "#E8F9EE" : "#FFFFFF",
+                      border: item.completed ? "2px solid #22C55E" : "2px solid #B6D7FF",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "2rem",
+                      cursor: item.completed ? "default" : "pointer",
+                    }}
+                  >
+                    <span>
+                      <strong>{item.time}</strong> — {item.activity}
+                    </span>
+                    {item.completed && (
+                      <span style={{ color: "#22C55E" }}>✓ Done</span>
+                    )}
+                  </div>
+                ))}
               </div>
-
-              {/* PENDING */}
-              <div
-                style={{
-                  padding: "20px",
-                  borderRadius: "16px",
-                  background: "#FFFFFF",
-                  border: "2px solid #B6D7FF",
-                  fontSize: "2rem",
-                }}
-              >
-                <strong>09:00</strong> — Take medicine
-              </div>
-
-              <div
-                style={{
-                  padding: "20px",
-                  borderRadius: "16px",
-                  background: "#FFFFFF",
-                  border: "2px solid #B6D7FF",
-                  fontSize: "2rem",
-                }}
-              >
-                <strong>12:30</strong> — Lunch
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* SECTION 3: PHOTOS OR ROUTINE */}
-        {/* {showPhotos && (
-          <section
-            style={{
-              background: palette.card, borderRadius: "40px", padding: "40px", boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-            }}>
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
-                Your Family
-              </h2>
-              <div style={{ textAlign: "center" }}>
-                <h2 style={{
-                  fontSize: "2.8rem",
-                  marginBottom: "30px",
-                  fontWeight: "700"
-                }}>
-                  Your Family
-                </h2>
-
-                <div style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center"
-                }}>
-                  <img
-                    src={fakePhotos[photoIndex].url}
-                    alt="Family"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "500px",
-                      objectFit: "contain",
-                      borderRadius: "20px"
-                    }}
-                  />
-                </div>
-
-                <p style={{
-                  marginTop: "20px",
-                  fontSize: "2rem",
-                  fontWeight: "500"
-                }}>
-                  {fakePhotos[photoIndex].caption}
-                </p>
-              </div>
-              <p>{fakePhotos[photoIndex].caption}</p>
-            </div>
-          </section>
-        )} */}
-
-        {/* SECTION 4: HISTORY */}
+        {/* ── CONVERSATION HISTORY ── */}
         <section
           style={{
             background: palette.card,
@@ -459,45 +491,32 @@ export default function PatientPage() {
             opacity: 0.9,
           }}
         >
-          <h2
-            style={{
-              fontSize: "3.5rem",
-              fontWeight: "700",
-              marginBottom: "20px",
-              //textAlign: "center",
-              color: "#0F233F",
-            }}
-          >
+          <h2 style={{ fontSize: "3.5rem", fontWeight: "700", marginBottom: "20px", color: "#0F233F" }}>
             Recent Conversation
           </h2>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-          >
-            {history.map((m, i) => (
-              <div
-                key={i}
-                style={{
-                  padding: "20px",
-                  borderRadius: "20px",
-                  background: m.by === "AI" ? "#EAF4FF" : "#E7FEE9",
-                  fontSize: "1.8rem",
-                }}
-              >
-                <strong>{m.by}:</strong> {m.text}
-              </div>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {history.length === 0 ? (
+              <p style={{ fontSize: "1.8rem", opacity: 0.6 }}>No conversation yet. Tap "Talk to Me" to start.</p>
+            ) : (
+              history.map((m, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "20px",
+                    borderRadius: "20px",
+                    background: m.by === "AI" ? "#EAF4FF" : "#E7FEE9",
+                    fontSize: "1.8rem",
+                  }}
+                >
+                  <strong>{m.by}:</strong> {m.text}
+                </div>
+              ))
+            )}
           </div>
         </section>
 
         <footer style={{ textAlign: "center", padding: "20px" }}>
-          <Link
-            href="/"
-            style={{
-              fontSize: "1.8rem",
-              color: "#1A1A1A",
-              textDecoration: "underline",
-            }}
-          >
+          <Link href="/" style={{ fontSize: "1.8rem", color: "#1A1A1A", textDecoration: "underline" }}>
             Back to Settings
           </Link>
         </footer>
@@ -505,4 +524,3 @@ export default function PatientPage() {
     </main>
   );
 }
-``;

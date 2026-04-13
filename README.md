@@ -29,6 +29,27 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Local backend integration
+
+This project now rewrites frontend API calls from `/api/*` to the backend server at `http://localhost:5000` by default.
+
+Start the backend first in the `backend` folder:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Then start the frontend from the project root:
+
+```bash
+npm install
+npm run dev
+```
+
+If your backend runs on a different URL, set `NEXT_PUBLIC_API_BASE_URL` in your environment.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
